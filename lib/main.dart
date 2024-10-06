@@ -31,19 +31,19 @@ class Particle {
   Particle(this.orbit) {
     originalOrbit = orbit;
     // 파티클이 위치할 극좌표를 랜덤하게 생성한다.
-    theta = GetRandomRange(0.0, 360.0) * pi * 180;
-    opacity = GetRandomRange(0.3, 1.0);
+    theta = getRandomRange(0.0, 360.0) * pi * 180;
+    opacity = getRandomRange(0.3, 1.0);
     color = Colors.white;
   }
 
   final rnd = Random();
 
-  double GetRandomRange(double min, double max) {
+  double getRandomRange(double min, double max) {
     return rnd.nextDouble() * (max - min) + min;
   }
 
   // 파티클이 위치할 극좌표를 바깥으로 이동시킨다.
-  void Update() {
+  void update() {
     orbit += 0.1;
     opacity -= 0.0025;
     // 투명도가 0보다 작다면 파티클을 원래 위치한 극좌표로 이동시킨다.
@@ -51,7 +51,7 @@ class Particle {
       orbit = originalOrbit;
       // 파티클의 위치는 이미 고정되어있지만 투명도가 0 이하가 되면
       // 랜덤하게 투명도를 설정함으로써 여러개의 파티클이 계속 생기는 듯한 착시를 일으킨다.
-      opacity = GetRandomRange(0.1, 1.0);
+      opacity = getRandomRange(0.1, 1.0);
     }
   }
 }
@@ -86,7 +86,7 @@ class _RadialProgressWidgetState extends State<RadialProgressWidget> {
           // 퍼센테이지가 100에 도달하면 파티클 업데이트를 수행한다.
           setState(() {
             for (var p in particles) {
-              p.Update();
+              p.update();
             }
           });
         }
@@ -106,16 +106,15 @@ class _RadialProgressWidgetState extends State<RadialProgressWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: CustomPaint(
-        painter: RadialProgressPainter(value, particles),
-      ),
+    // 이 프로젝트에서는 setState() 메서드를 통해 CustomPainter를 다시 그린다.
+    return CustomPaint(
+      painter: RadialProgressPainter(value, particles),
     );
   }
 }
 
 // 극좌표를 직교좌표로 변환한다.
-Offset PolarToCartesian(double r, double theta) {
+Offset polarToCartesian(double r, double theta) {
   final dx = r * cos(theta);
   final dy = r * sin(theta);
   return Offset(dx, dy);
@@ -157,14 +156,14 @@ class RadialProgressPainter extends CustomPainter {
   void drawBackground(Canvas canvas, Offset c, double extent) {
     final rect = Rect.fromCenter(center: c, width: extent, height: extent);
     final bgPaint = Paint()
-      ..shader = RadialGradient(colors: [col1, col2]).createShader(rect)
+      ..shader = const RadialGradient(colors: [col1, col2]).createShader(rect)
       ..style = PaintingStyle.fill;
     canvas.drawPaint(bgPaint);
   }
 
   void drawParticles(Canvas canvas, Offset c) {
     for (var p in particles) {
-      final cc = PolarToCartesian(p.orbit, p.theta) + c;
+      final cc = polarToCartesian(p.orbit, p.theta) + c;
       final paint = Paint()..color = p.color.withOpacity(p.opacity);
       canvas.drawCircle(cc, 1.0, paint);
     }
